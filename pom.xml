@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>mk.ukim.finki.wp</groupId>
-    <artifactId>jan2025-g2</artifactId>
+    <artifactId>devops</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>jan2025-g2</name>
     <description>jan2025-g2</description>
