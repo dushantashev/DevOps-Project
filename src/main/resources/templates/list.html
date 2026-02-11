@@ -1,127 +1,415 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <title>national park List</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>National Parks</title>
+
+    <style>
+        :root{
+            --bg:#0b1220;
+            --card:#111a2e;
+            --muted:#9db0d1;
+            --text:#e8eefc;
+            --line:rgba(255,255,255,.10);
+            --primary:#4f7cff;
+            --primary2:#3a62e0;
+            --danger:#ff5c6a;
+            --warn:#ffcc66;
+            --ok:#33d69f;
+            --shadow: 0 14px 40px rgba(0,0,0,.35);
+            --radius:18px;
+        }
+        *{box-sizing:border-box}
+        body{
+            margin:0;
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+            background: radial-gradient(1200px 800px at 20% 10%, rgba(79,124,255,.28), transparent 55%),
+            radial-gradient(900px 700px at 90% 20%, rgba(51,214,159,.16), transparent 60%),
+            var(--bg);
+            color:var(--text);
+            min-height:100vh;
+        }
+
+        /* Top nav */
+        .topbar{
+            position: sticky;
+            top: 0;
+            backdrop-filter: blur(10px);
+            background: rgba(11,18,32,.65);
+            border-bottom: 1px solid var(--line);
+            z-index: 5;
+        }
+        .topbar .wrap{
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 14px 18px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:12px;
+        }
+        .brand{display:flex;align-items:center;gap:10px;font-weight:900}
+        .logo{
+            width:34px;height:34px;border-radius:10px;
+            background: linear-gradient(135deg, rgba(79,124,255,1), rgba(51,214,159,1));
+            box-shadow: 0 10px 24px rgba(79,124,255,.25);
+        }
+        .nav a{
+            color:var(--muted);
+            text-decoration:none;
+            padding:9px 12px;
+            border-radius:12px;
+            transition:.15s;
+            border: 1px solid transparent;
+            font-weight:700;
+            font-size:14px;
+        }
+        .nav a:hover{
+            color:var(--text);
+            background: rgba(255,255,255,.06);
+            border-color: rgba(255,255,255,.08);
+        }
+
+
+        .page{
+            max-width: 1200px;
+            margin: 26px auto;
+            padding: 0 18px 40px;
+            display:grid;
+            gap: 16px;
+        }
+
+        .card{
+            background: rgba(17,26,46,.90);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow:hidden;
+        }
+        .card-header{
+            padding: 18px;
+            border-bottom: 1px solid var(--line);
+            display:flex;
+            align-items:flex-start;
+            justify-content:space-between;
+            gap:14px;
+            flex-wrap: wrap;
+        }
+        .title{margin:0;font-size:20px;font-weight:900}
+        .subtitle{margin:6px 0 0;color:var(--muted);font-size:13.5px;line-height:1.4}
+        .card-body{padding: 18px;}
+
+        /* Filter form */
+        .filter{
+            display:grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 12px;
+            align-items:end;
+        }
+        @media (max-width: 1100px){
+            .filter{grid-template-columns: repeat(3, 1fr);}
+        }
+        @media (max-width: 700px){
+            .filter{grid-template-columns: 1fr;}
+        }
+        .field{display:flex;flex-direction:column;gap:8px;}
+        label{font-size:13px;color:var(--muted);font-weight:800;letter-spacing:.2px;}
+        input, select{
+            width:100%;
+            color: var(--text);
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.10);
+            border-radius: 14px;
+            padding: 11px 12px;
+            outline:none;
+            transition:.15s;
+        }
+        input:focus, select:focus{
+            border-color: rgba(79,124,255,.6);
+            box-shadow: 0 0 0 4px rgba(79,124,255,.18);
+        }
+        .actions-row{
+            display:flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items:center;
+            justify-content:flex-end;
+        }
+        @media (max-width: 700px){
+            .actions-row{justify-content:flex-start}
+        }
+
+        /* Buttons */
+        .btn{
+            appearance:none;
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 14px;
+            padding: 10px 14px;
+            font-weight: 900;
+            cursor:pointer;
+            text-decoration:none;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+            transition:.15s;
+            color: var(--text);
+            background: rgba(255,255,255,.06);
+        }
+        .btn:hover{transform: translateY(-1px);background: rgba(255,255,255,.09);}
+        .btn-primary{
+            border-color: rgba(79,124,255,.35);
+            background: linear-gradient(180deg, rgba(79,124,255,.95), rgba(58,98,224,.95));
+            box-shadow: 0 16px 34px rgba(79,124,255,.20);
+        }
+        .btn-primary:hover{border-color: rgba(79,124,255,.60);}
+        .btn-ghost{background: transparent;}
+        .btn-danger{
+            border-color: rgba(255,92,106,.35);
+            background: rgba(255,92,106,.14);
+        }
+        .btn-danger:hover{border-color: rgba(255,92,106,.55);}
+        .btn-warn{
+            border-color: rgba(255,204,102,.35);
+            background: rgba(255,204,102,.14);
+        }
+        .btn-warn:hover{border-color: rgba(255,204,102,.55);}
+
+        /* Table */
+        .table-wrap{overflow:auto;}
+        table{
+            width:100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 920px;
+        }
+        th, td{
+            padding: 12px 12px;
+            border-bottom: 1px solid rgba(255,255,255,.08);
+            vertical-align: middle;
+            font-size: 14px;
+        }
+        th{
+            position: sticky;
+            top: 0;
+            background: rgba(17,26,46,.98);
+            z-index: 2;
+            text-align:left;
+            color: var(--muted);
+            font-weight: 900;
+            letter-spacing: .2px;
+        }
+        tr:hover td{background: rgba(255,255,255,.03);}
+        .muted{color: rgba(157,176,209,.9);}
+
+        /* Badges */
+        .badge{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,.10);
+            font-weight: 900;
+            font-size: 12px;
+            letter-spacing: .2px;
+        }
+        .badge-open{
+            background: rgba(51,214,159,.12);
+            border-color: rgba(51,214,159,.25);
+            color: rgba(203,255,238,.95);
+        }
+        .badge-closed{
+            background: rgba(255,92,106,.12);
+            border-color: rgba(255,92,106,.25);
+            color: rgba(255,214,218,.95);
+        }
+
+
+        .row-actions{
+            display:flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items:center;
+        }
+        .inline-form{margin:0;}
+        .btn-sm{padding: 8px 10px; border-radius: 12px; font-weight: 900; font-size: 13px;}
+    </style>
 </head>
+
 <body>
 
-<div>
-    <!-- The form below should invoke the method NationalParkController.listAll -->
-    <form id="filter-form">
-        <label for="name">National Park Name</label>
-        <input id="name" type="text" name="name"/>
+<header class="topbar">
+    <div class="wrap">
+        <div class="brand">
+            <div class="logo" aria-hidden="true"></div>
+            <div>National Parks</div>
+        </div>
 
-        <label for="areaSize">National Park Area Size (in square meters)</label>
-        <input id="areaSize" type="number" name="areaSize"/>
-
-        <label for="rating">Rating</label>
-        <input id="rating" type="number" step="0.1" min="0" max="10" name="rating"/>
-
-        <label for="parkType">National Park Type</label>
-        <select id="parkType" name="parkType">
-            <option value="">All</option>
-            <option th:each="lvl : ${parkTypes}"
-                    th:value="${lvl}"
-                    th:text="${lvl}"></option>
-
-
-            <!-- For each ParkType you should have one <option> like below  -->
-
-        </select>
-
-        <label for="location">ParkLocation</label>
-        <select id="location" name="locationId">
-            <option value="">All</option>
-            <option th:each="loc : ${locations}"
-                    th:value="${loc.getId()}"
-                    th:text="${loc.country +', '+loc.continent}"></option>
-
-            <!-- For each location you should have one <option> like below  -->
-<!--            <option>[location.country], [location.continent]</option>-->
-        </select>
-
-        <button id="filter" type="submit">Filter</button>
-    </form>
-
-
-    <th:block sec:authorize="hasRole('ADMIN')">
-    <div>
-        <!-- NationalParkController.showAdd -->
-        <a th:href="@{'/national-parks/add'}" class="add-item">Add new national park</a>
+        <nav class="nav" aria-label="Main">
+            <a href="/">Home</a>
+            <a href="/login">Login</a>
+            <a href="/logout">Logout</a>
+        </nav>
     </div>
-    </th:block>
+</header>
 
-    <table>
-        <tr>
-            <th>National Park</th>
-            <th>Area Size</th>
-            <th>Rating</th>
-            <th>National Park Type</th>
-            <th>ParkLocation</th>
-            <th>Open/Closed</th>
-            <th>Actions</th>
-        </tr>
-        <!-- For each national park you should have one <tr> like below -->
-        <tr th:each="park : ${page.getContent()}" class="item">
-            <td th:text="${park.getName()}">[park.name]</td>
-            <td th:text="${park.areaSize}">[park.areaSize]</td>
-            <td th:text="${park.rating}">[park.rating]</td>
-            <td th:text="${park.parkType != null ? park.parkType : 'No category'}">[park.parkType]</td>
+<main class="page">
 
-            <td th:text="${park.location != null ? park.location.country+', '+park.location.continent : 'No location'}">
+    <!-- FILTER CARD -->
+    <section class="card">
+        <div class="card-header">
+            <div>
+                <h1 class="title">National Park List</h1>
+                <p class="subtitle">Use filters to find parks faster. Leave empty for “All”.</p>
+            </div>
+
+            <th:block sec:authorize="hasRole('ADMIN')">
+                <a th:href="@{'/national-parks/add'}" class="btn btn-primary">+ Add new</a>
+            </th:block>
+        </div>
+
+        <div class="card-body">
+            <!-- invoke NationalParkController.listAll -->
+            <form id="filter-form" method="get" th:action="@{/national-parks}">
+                <div class="filter">
+                    <div class="field">
+                        <label for="name">Name</label>
+                        <input id="name" type="text" name="name" placeholder="e.g. Yellowstone"
+                               th:value="${param.name}"/>
+                    </div>
+
+                    <div class="field">
+                        <label for="areaSize">Area Size (m²)</label>
+                        <input id="areaSize" type="number" name="areaSize" min="0" step="1"
+                               placeholder="e.g. 8990000" th:value="${param.areaSize}"/>
+                    </div>
+
+                    <div class="field">
+                        <label for="rating">Rating</label>
+                        <input id="rating" type="number" step="0.1" min="0" max="10" name="rating"
+                               placeholder="0 - 10" th:value="${param.rating}"/>
+                    </div>
+
+                    <div class="field">
+                        <label for="parkType">Park Type</label>
+                        <select id="parkType" name="parkType">
+                            <option value="">All</option>
+                            <option th:each="lvl : ${parkTypes}"
+                                    th:value="${lvl}"
+                                    th:text="${lvl}"
+                                    th:selected="${param.parkType != null and param.parkType[0] == lvl}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="location">Location</label>
+                        <select id="location" name="locationId">
+                            <option value="">All</option>
+                            <option th:each="loc : ${locations}"
+                                    th:value="${loc.getId()}"
+                                    th:text="${loc.country + ', ' + loc.continent}"
+                                    th:selected="${param.locationId != null and param.locationId[0] == #strings.toString(loc.id)}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="actions-row">
+                        <button id="filter" type="submit" class="btn btn-primary">Filter</button>
+                        <a class="btn btn-ghost" th:href="@{/national-parks}">Reset</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
 
 
+    <section class="card">
+        <div class="card-body table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>National Park</th>
+                    <th>Area Size</th>
+                    <th>Rating</th>
+                    <th>Type</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th style="min-width: 260px;">Actions</th>
+                </tr>
+                </thead>
 
-            [park.location.country], [park.location.continent]</td>
-            <td th:text="${park.isClosed()} ? 'CLOSED' : 'OPEN'">
+                <tbody>
+                <tr th:each="park : ${page.getContent()}">
+                    <td>
+                        <div th:text="${park.getName()}">[park.name]</div>
+                        <div class="muted" th:text="'ID: ' + ${park.getId()}">ID</div>
+                    </td>
+
+                    <td th:text="${park.areaSize}">[park.areaSize]</td>
+                    <td th:text="${park.rating}">[park.rating]</td>
+
+                    <td th:text="${park.parkType != null ? park.parkType : 'No category'}">[park.parkType]</td>
+
+                    <td th:text="${park.location != null ? park.location.country + ', ' + park.location.continent : 'No location'}">
+                        [park.location.country], [park.location.continent]
+                    </td>
+
+                    <td>
+                        <span th:if="${!park.closed}" class="badge badge-open">OPEN</span>
+                        <span th:if="${park.closed}" class="badge badge-closed">CLOSED</span>
+                    </td>
+
+                    <td>
+                        <div class="row-actions">
+
+                            <th:block sec:authorize="hasRole('ADMIN')">
+                                <a class="btn btn-sm btn-ghost"
+                                   th:href="@{'/national-parks/edit/{id}' (id=${park.getId()})}">
+                                    Edit
+                                </a>
+                            </th:block>
+
+                            <th:block sec:authorize="hasRole('ADMIN')">
+                                <form class="inline-form"
+                                      th:action="@{'/national-parks/delete/{id}' (id=${park.getId()})}"
+                                      method="post">
+                                    <button type="submit" class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Delete this park?');">
+                                        Delete
+                                    </button>
+                                </form>
+                            </th:block>
+
+                            <th:block sec:authorize="hasRole('ADMIN')">
+                                <form class="inline-form"
+                                      th:if="${!park.closed}"
+                                      th:action="@{'/national-parks/close/{id}' (id=${park.getId()})}"
+                                      method="post">
+                                    <button type="submit" class="btn btn-sm btn-warn">
+                                        Close
+                                    </button>
+                                </form>
+                            </th:block>
+
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${page.getContent().isEmpty()}">
+                    <td colspan="7" class="muted">No parks found with the selected filters.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
 
 
-            [park.closed] -> OPEN/CLOSED</td>
-            <td>
-                <!-- NationalParkController.edit -->
-                <th:block sec:authorize="hasRole('ADMIN')">
-                <a th:href="@{'/national-parks/edit/{id}' (id=${park.getId()})}" class="edit-item">Edit</a>
+        <div th:include="paging :: pageSection(${page})"></div>
+    </section>
 
-                </th:block>
-                <!-- NationalParkController.delete -->
-
-                <th:block sec:authorize="hasRole('ADMIN')">
-                <form th:action="@{'/national-parks/delete/{id}' (id=${park.getId()})}" method="post">
-
-
-
-
-
-                    <button type="submit" class="delete-item">Delete</button>
-                </form>
-                </th:block>
-
-
-                <th:block sec:authorize="hasRole('ADMIN')">
-
-
-
-                <!-- NationalParkController.close -->
-                <form th:if="${!park.closed}" th:action="@{'/national-parks/close/{id}' (id=${park.getId()})}" method="post">
-                    <button type="submit" class="close-item">Close</button>
-                </form>
-                </th:block>
-
-            </td>
-        </tr>
-    </table>
-    <div th:include="paging :: pageSection(${page})"></div>
-
-
-</div>
-
-<div>
-    <ul id="nav">
-        <li><a href="/">Home</a></li>
-        <li><a href="/login">Login</a></li>
-        <li><a href="/logout">Logout</a></li>
-    </ul>
-</div>
+</main>
 
 </body>
 </html>

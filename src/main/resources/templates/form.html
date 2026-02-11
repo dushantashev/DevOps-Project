@@ -1,83 +1,385 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>national park Form</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${park == null ? 'Create National Park' : 'Edit National Park'}">National Park Form</title>
+
+    <style>
+        :root{
+            --bg:#0b1220;
+            --card:#111a2e;
+            --muted:#9db0d1;
+            --text:#e8eefc;
+            --line:rgba(255,255,255,.10);
+            --primary:#4f7cff;
+            --primary2:#3a62e0;
+            --danger:#ff5c6a;
+            --ok:#33d69f;
+            --shadow: 0 14px 40px rgba(0,0,0,.35);
+            --radius:18px;
+        }
+        *{box-sizing:border-box}
+        body{
+            margin:0;
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+            background: radial-gradient(1200px 800px at 20% 10%, rgba(79,124,255,.28), transparent 55%),
+            radial-gradient(900px 700px at 90% 20%, rgba(51,214,159,.16), transparent 60%),
+            var(--bg);
+            color:var(--text);
+            min-height:100vh;
+        }
+
+        /* Top nav */
+        .topbar{
+            position: sticky;
+            top: 0;
+            backdrop-filter: blur(10px);
+            background: rgba(11,18,32,.65);
+            border-bottom: 1px solid var(--line);
+            z-index: 5;
+        }
+        .topbar .wrap{
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 14px 18px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:12px;
+        }
+        .brand{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            font-weight: 800;
+            letter-spacing:.2px;
+        }
+        .logo{
+            width:34px;height:34px;border-radius:10px;
+            background: linear-gradient(135deg, rgba(79,124,255,1), rgba(51,214,159,1));
+            box-shadow: 0 10px 24px rgba(79,124,255,.25);
+        }
+        .nav a{
+            color:var(--muted);
+            text-decoration:none;
+            padding:9px 12px;
+            border-radius:12px;
+            transition:.15s;
+            border: 1px solid transparent;
+            font-weight:600;
+            font-size:14px;
+        }
+        .nav a:hover{
+            color:var(--text);
+            background: rgba(255,255,255,.06);
+            border-color: rgba(255,255,255,.08);
+        }
+
+        /* Page */
+        .page{
+            max-width: 1100px;
+            margin: 26px auto;
+            padding: 0 18px 40px;
+            display:grid;
+            grid-template-columns: 1.2fr .8fr;
+            gap: 20px;
+        }
+        @media (max-width: 900px){
+            .page{grid-template-columns: 1fr}
+        }
+
+        .card{
+            background: rgba(17,26,46,.90);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow:hidden;
+        }
+        .card-header{
+            padding: 18px 18px 10px;
+            border-bottom: 1px solid var(--line);
+        }
+        .title{
+            margin:0;
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing:.2px;
+        }
+        .subtitle{
+            margin:6px 0 0;
+            color: var(--muted);
+            font-size: 13.5px;
+            line-height: 1.4;
+        }
+        .card-body{ padding: 18px; }
+
+        /* Form grid */
+        .grid{
+            display:grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        @media (max-width: 700px){
+            .grid{grid-template-columns: 1fr}
+        }
+        .field{
+            display:flex;
+            flex-direction:column;
+            gap:8px;
+        }
+        label{
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 700;
+            letter-spacing:.2px;
+        }
+        input, select{
+            width:100%;
+            color: var(--text);
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.10);
+            border-radius: 14px;
+            padding: 12px 12px;
+            outline:none;
+            transition: .15s;
+        }
+        input:focus, select:focus{
+            border-color: rgba(79,124,255,.6);
+            box-shadow: 0 0 0 4px rgba(79,124,255,.18);
+        }
+        .hint{
+            color: rgba(157,176,209,.9);
+            font-size: 12.5px;
+            line-height: 1.35;
+        }
+        .span-2{ grid-column: 1 / -1; }
+
+        /* Better selects */
+        select{
+            min-height: 48px;
+        }
+        .select-compact{
+            height: 48px;
+        }
+
+        /* Actions */
+        .actions{
+            display:flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+        .btn{
+            appearance:none;
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 14px;
+            padding: 11px 14px;
+            font-weight: 800;
+            cursor:pointer;
+            text-decoration:none;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+            transition:.15s;
+            color: var(--text);
+            background: rgba(255,255,255,.06);
+        }
+        .btn:hover{
+            transform: translateY(-1px);
+            border-color: rgba(255,255,255,.18);
+            background: rgba(255,255,255,.09);
+        }
+        .btn-primary{
+            border-color: rgba(79,124,255,.35);
+            background: linear-gradient(180deg, rgba(79,124,255,.95), rgba(58,98,224,.95));
+            box-shadow: 0 16px 34px rgba(79,124,255,.20);
+        }
+        .btn-primary:hover{
+            border-color: rgba(79,124,255,.60);
+        }
+        .btn-ghost{
+            background: transparent;
+        }
+
+        /* Side info */
+        .side{
+            padding: 18px;
+        }
+        .pill{
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,.10);
+            background: rgba(255,255,255,.04);
+            color: var(--muted);
+            font-weight: 800;
+            font-size: 12px;
+        }
+        .bullet{
+            margin: 12px 0 0;
+            padding: 0 0 0 18px;
+            color: rgba(157,176,209,.92);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .bullet li{ margin: 7px 0; }
+
+        /* Small footer */
+        .footer-note{
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--line);
+            color: rgba(157,176,209,.9);
+            font-size: 12.5px;
+        }
+    </style>
 </head>
 <body>
-<!-- The form should submit to NationalParkController.create or NationalParkController.update,
-     depending on whether we are creating or editing a national park -->
-<form method="post" th:action="@{${park == null ? '/national-parks' : '/national-parks/' + park.id}}">
 
+<header class="topbar">
+    <div class="wrap">
+        <div class="brand">
+            <div class="logo" aria-hidden="true"></div>
+            <div>National Parks</div>
+        </div>
 
-
-<div>
-        <label for="name">National Park Name</label>
-        <input type="text"
-               id="name"
-               name="name"
-               th:value="${park != null ? park.name : ''}"
-               required>
+        <nav class="nav" aria-label="Main">
+            <a href="/">Home</a>
+            <a href="/login">Login</a>
+            <a href="/logout">Logout</a>
+        </nav>
     </div>
+</header>
 
-    <div>
-        <label for="areaSize">Area Size (in square meters)</label>
-        <input type="number"
-               id="areaSize"
-               name="areaSize"
-               th:value="${park != null ? park.areaSize : ''}"
-               required>
-    </div>
+<main class="page">
 
-    <div>
-        <label for="rating">Rating</label><br/>
-        <input type="number"
-               id="rating"
-               name="rating"
-               step="0.1"
-               min="0"
-               max="10"
-               th:value="${park != null ? park.rating : ''}"
-               required>
-    </div>
+    <!-- Main form card -->
+    <section class="card">
+        <div class="card-header">
+            <h1 class="title" th:text="${park == null ? 'Create National Park' : 'Edit National Park'}">
+                National Park Form
+            </h1>
+            <p class="subtitle">
+                Fill the details below. Fields marked as required must be provided.
+            </p>
+        </div>
 
-    <div>
-        <label for="parkType">National Park Type</label><br/>
-        <select id="parkType" name="parkType" size="5" required>
-            <option th:each="level : ${parkTypes}"
-                    th:text="${level}"
-                    th:value="${level}"
-                    th:selected="${park?.parkType == level}"
-            ></option>
+        <div class="card-body">
+            <!-- Same logic as yours -->
+            <form method="post"
+                  th:action="@{${park == null ? '/national-parks' : '/national-parks/' + park.id}}">
 
+                <div class="grid">
 
-        </select>
-    </div>
+                    <div class="field span-2">
+                        <label for="name">National Park Name *</label>
+                        <input type="text"
+                               id="name"
+                               name="name"
+                               placeholder="e.g. Yellowstone"
+                               th:value="${park != null ? park.name : ''}"
+                               required />
+                        <div class="hint">Use a clear, official name (min 2–3 words if needed).</div>
+                    </div>
 
-    <div>
-        <label for="location">ParkLocation</label><br/>
-        <select id="location" name="locationId" required size="5">
-            <option
-                    th:each="loc : ${locations}"
-                    th:text="${loc.getCountry() +', '+ loc.getContinent()}"
-                    th:value="${loc.getId()}"
-                    th:selected="${park != null && park.location != null && park.location.id == loc.id}">
-            </option>
+                    <div class="field">
+                        <label for="areaSize">Area Size (m²) *</label>
+                        <input type="number"
+                               id="areaSize"
+                               name="areaSize"
+                               min="0"
+                               step="1"
+                               placeholder="e.g. 8990000"
+                               th:value="${park != null ? park.areaSize : ''}"
+                               required />
+                        <div class="hint">Enter area in square meters. Whole numbers recommended.</div>
+                    </div>
 
-            <!-- For each location you should have one <option> like below  -->
-<!--            <option>[location.country], [location.continent]</option>-->
-        </select>
-    </div>
+                    <div class="field">
+                        <label for="rating">Rating (0–10) *</label>
+                        <input type="number"
+                               id="rating"
+                               name="rating"
+                               step="0.1"
+                               min="0"
+                               max="10"
+                               placeholder="e.g. 8.7"
+                               th:value="${park != null ? park.rating : ''}"
+                               required />
+                        <div class="hint">Allowed range: 0.0 to 10.0</div>
+                    </div>
 
-    <button id="submit" type="submit">Submit</button>
-    <a id="back" href="/national-parks" type="button" class="btn btn-primary">Back to national parks</a>
-</form>
+                    <div class="field">
+                        <label for="parkType">National Park Type *</label>
+                        <select id="parkType" name="parkType" class="select-compact" required>
+                            <option value="" disabled
+                                    th:selected="${park == null}">Select type</option>
 
-<div>
-    <ul id="nav">
-        <li><a href="/">Home</a></li>
-        <li><a href="/login">Login</a></li>
-        <li><a href="/logout">Logout</a></li>
-    </ul>
-</div>
+                            <option th:each="level : ${parkTypes}"
+                                    th:text="${level}"
+                                    th:value="${level}"
+                                    th:selected="${park?.parkType == level}">
+                            </option>
+                        </select>
+                        <div class="hint">Choose the category/type for this park.</div>
+                    </div>
+
+                    <div class="field">
+                        <label for="location">Location *</label>
+                        <select id="location" name="locationId" class="select-compact" required>
+                            <option value="" disabled
+                                    th:selected="${park == null || park.location == null}">
+                                Select location
+                            </option>
+
+                            <option th:each="loc : ${locations}"
+                                    th:text="${loc.getCountry() + ', ' + loc.getContinent()}"
+                                    th:value="${loc.getId()}"
+                                    th:selected="${park != null && park.location != null && park.location.id == loc.id}">
+                            </option>
+                        </select>
+                        <div class="hint">Country + continent pairing.</div>
+                    </div>
+
+                </div>
+
+                <div class="actions">
+                    <button id="submit" class="btn btn-primary" type="submit"
+                            th:text="${park == null ? 'Create Park' : 'Save Changes'}">
+                        Submit
+                    </button>
+
+                    <a id="back" class="btn btn-ghost" href="/national-parks">
+                        Back to list
+                    </a>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Side panel -->
+    <aside class="card">
+        <div class="side">
+            <span class="pill" th:text="${park == null ? 'Mode: Create' : 'Mode: Edit'}">Mode</span>
+
+            <ul class="bullet">
+                <li><b>Name</b> should be unique and readable.</li>
+                <li><b>Area</b> is stored in square meters (m²).</li>
+                <li><b>Rating</b> is a decimal number between 0 and 10.</li>
+                <li><b>Type</b> and <b>Location</b> are required for valid records.</li>
+            </ul>
+
+            <div class="footer-note">
+                Tip: If you use validation on backend, you can show errors next to fields with Thymeleaf.
+            </div>
+        </div>
+    </aside>
+
+</main>
+
 </body>
 </html>
